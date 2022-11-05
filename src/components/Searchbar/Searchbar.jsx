@@ -4,6 +4,7 @@ import style from './Searchbar.module.css';
 export default class Searchbar extends Component {
   state = {
     searchImage: '',
+    searchPage: 1,
   };
 
   handleImageChange = event => {
@@ -17,8 +18,10 @@ export default class Searchbar extends Component {
       return alert('Please, enter image name.');
     }
 
-    this.props.onSubmit(this.state.searchImage);
-    this.setState({ searchImage: '' });
+    const { searchImage, searchPage } = this.state;
+    this.props.onSubmit(searchImage, searchPage);
+
+    this.setState({ searchImage: '', searchPage: 1 });
   };
 
   render() {

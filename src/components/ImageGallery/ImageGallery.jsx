@@ -1,11 +1,11 @@
 import { Component } from 'react';
-import PicturesAPI from 'components/API/pixabayImages-api';
+import fetchPictures from 'components/API/pixabayImages-api';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { Button } from '../Button/Button';
 import { Loader } from 'components/Loader/Loader';
 import style from './ImageGallery.module.css';
 
-const picturesSearchApi = new PicturesAPI();
+// const picturesSearchApi = new PicturesAPI();
 
 const Status = {
   IDLE: 'idle',
@@ -17,31 +17,46 @@ const Status = {
 export default class ImageGallery extends Component {
   state = {
     images: null,
+    page: 1,
     status: Status.IDLE,
   };
+
+  pegeReset() {
+    this.setState({ page: this.props.imagePage });
+  }
+
+  componentDidMount(prevProps) {}
 
   componentDidUpdate(prevProps, prevState) {
     const prevName = prevProps.imageName;
     const nextName = this.props.imageName;
 
-    picturesSearchApi.query = nextName;
+    const prevPage = prevState.page;
+    const nextPage = this.state.page;
 
-    if (prevName !== nextName) {
+    // const prevPage = prevProps.imagePage;
+    // const nextPage = this.state.page;
+
+    if (prevName !== nextName || prevPage !== nextPage) {
       this.setState({ status: Status.PENDING });
 
-      picturesSearchApi
-        .fetchPictures(picturesSearchApi.query)
+      console.log(prevName);
+      console.log(nextName);
+      console.log(prevPage);
+      console.log(nextPage);
+
+      fetchPictures(nextName, this.state.page)
         .then(images => this.setState({ images, status: Status.RESOLVED }))
+        .then()
         .then(console.log(this.state.images))
         .catch(error => console.log(error));
     }
   }
 
-  loadMoreImages() {
+  loadMoreImages = () => {
+    this.setState(prevState => ({ page: prevState.page + 1 }));
     console.log('click');
-    picturesSearchApi.icrementPage();
-    picturesSearchApi.fetchPictures();
-  }
+  };
 
   render() {
     const { images, status } = this.state;
@@ -64,7 +79,8 @@ export default class ImageGallery extends Component {
             </ul>
           </section>
 
-          <Button onClick={this.loadMoreImages} />
+          {images.length < 12 ||
+            (images.length > 0 && <Button onClick={this.loadMoreImages} />)}
         </>
       );
     }
