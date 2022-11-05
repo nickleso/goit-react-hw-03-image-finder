@@ -1,10 +1,10 @@
 import { Component } from 'react';
+import { FcSearch } from 'react-icons/fc';
 import style from './Searchbar.module.css';
 
 export default class Searchbar extends Component {
   state = {
     searchImage: '',
-    searchPage: 1,
   };
 
   handleImageChange = event => {
@@ -18,10 +18,9 @@ export default class Searchbar extends Component {
       return alert('Please, enter image name.');
     }
 
-    const { searchImage, searchPage } = this.state;
-    this.props.onSubmit(searchImage, searchPage);
+    this.props.onSubmit(this.state.searchImage);
 
-    this.setState({ searchImage: '', searchPage: 1 });
+    this.setState({ searchImage: '' });
   };
 
   render() {
@@ -42,6 +41,7 @@ export default class Searchbar extends Component {
             ></input>
           </label>
           <button type="submit" className={style.SearchForm__button}>
+            <FcSearch />
             <span className={style.SearchForm__buttonLabel}>Search</span>
           </button>
         </form>
