@@ -5,6 +5,7 @@ import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import Modal from './Modal/Modal';
 import Searchbar from './Searchbar/Searchbar';
+import style from './Searchbar/Searchbar.module.css';
 
 const Status = {
   IDLE: 'idle',
@@ -18,14 +19,14 @@ export default class App extends Component {
     imageName: '',
     images: [],
     page: 1,
-    totalImages: 0,
+    showButton: false,
     showModal: false,
     status: Status.IDLE,
     modalImage: '',
     imageAlt: '',
   };
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(_, prevState) {
     const prevName = prevState.imageName;
     const nextName = this.state.imageName;
 
@@ -39,18 +40,20 @@ export default class App extends Component {
         .then(images => {
           if (images.hits.length < 1) {
             this.setState({
+              showButton: false,
               status: Status.IDLE,
             });
             return alert('No images on your query');
           }
 
+          this.setState(prevState => ({
+            images: [...prevState.images, ...images.hits],
+          }));
+
           this.setState({
-            images:
-              this.state.page === 1
-                ? images.hits
-                : [...prevState.images, ...images.hits],
-            totalImages: images.total,
             status: Status.RESOLVED,
+            showButton:
+              this.state.page < Math.ceil(images.total / 12) ? true : false,
           });
         })
 
@@ -60,11 +63,17 @@ export default class App extends Component {
   }
 
   handleFormSubmit = imageName => {
+    if (imageName === this.state.imageName) {
+      return;
+    }
+
     this.setState({
       imageName,
       page: 1,
       images: [],
-      totalImages: 0,
+      showButton: false,
+      showModal: false,
+      status: Status.IDLE,
     });
   };
 
@@ -85,48 +94,43 @@ export default class App extends Component {
   };
 
   render() {
+    const { images, status, showModal, modalImage, imageAlt, showButton } =
+      this.state;
+
     const {
-      images,
-      page,
-      status,
-      showModal,
-      modalImage,
-      imageAlt,
-      totalImages,
-    } = this.state;
-
-    const totalPages = Math.ceil(totalImages / 12);
-
-    const renderIfPending = () => status === 'pending' && <Loader />;
-
-    const renderIfResolved = () =>
-      status === 'resolved' && (
-        <ImageGallery
-          showModal={this.toggleModal}
-          images={images}
-          handleModalImage={this.handleModalImage}
-          handleModalAlt={this.handleModalAlt}
-        />
-      );
-
-    const showButtonLoadMore = () =>
-      page <= totalPages - 1 && <Button onClick={this.loadMoreImages} />;
-
-    const renderModal = () =>
-      showModal && (
-        <Modal onClose={this.toggleModal}>
-          <img src={modalImage} alt={imageAlt} />
-        </Modal>
-      );
+      handleFormSubmit,
+      toggleModal,
+      handleModalImage,
+      handleModalAlt,
+      loadMoreImages,
+    } = this;
 
     return (
       <>
-        <Searchbar onSubmit={this.handleFormSubmit} />
+        <Searchbar onSubmit={handleFormSubmit} />
 
-        {renderIfPending()}
-        {renderIfResolved()}
-        {showButtonLoadMore()}
-        {renderModal()}
+        {status === 'idle' && (
+          <h2 className={style.EmptySearch}>Search something!</h2>
+        )}
+
+        {status === 'pending' && <Loader />}
+
+        {images.length > 0 && (
+          <ImageGallery
+            showModal={toggleModal}
+            images={images}
+            handleModalImage={handleModalImage}
+            handleModalAlt={handleModalAlt}
+          />
+        )}
+
+        {showButton && <Button onClick={loadMoreImages} />}
+
+        {showModal && (
+          <Modal onClose={toggleModal}>
+            <img src={modalImage} alt={imageAlt} />
+          </Modal>
+        )}
       </>
     );
   }
